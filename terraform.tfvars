@@ -1,0 +1,17 @@
+service_role = "EMR_DefaultRole"
+autoscaling_role = "EMR_AutoScaling_DefaultRole"
+instance_profile = "EMR_EC2_DefaultRole"
+cluster_name    = "spark-cluster"
+release_label   = "emr-7.0.0"
+applications    = ["Spark"]
+core_instance_count = 1
+core_instance_type = "m4.large"
+master_instance_type = "m4.large"
+master_instance_count = 1
+cluster_identifier = "docdb-cluster-studi"
+master_username    = "pierre"
+master_password    = "Studi2024$"
+engine_version = "5.0.0"
+instance_count = "3"
+instance_class = "db.t3.medium"
+allowed_ports           = [22]
