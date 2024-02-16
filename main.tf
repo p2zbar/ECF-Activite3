@@ -213,6 +213,12 @@ resource "aws_sns_topic" "emr_alarm_topic" {
   name = "emr-alarm-topic"
 }
 
+resource "aws_sns_topic_subscription" "emr_alarm_subscription" {
+  topic_arn = aws_sns_topic.emr_alarm_topic.arn
+  protocol  = "email"
+  endpoint  = "aws.muzzle950@passinbox.com"
+}
+
 resource "aws_cloudwatch_metric_alarm" "cpu_utilization_high" {
   alarm_name          = "emr-cpu-utilization-high"
   comparison_operator = "GreaterThanThreshold"
