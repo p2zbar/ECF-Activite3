@@ -177,7 +177,6 @@ resource "random_id" "bucket_suffix" {
   byte_length = 2
 }
 
-
 #Create Apache Spark Cluster using EC2
 resource "aws_emr_cluster" "spark_cluster" {
   name          = var.cluster_name
@@ -207,6 +206,64 @@ resource "aws_emr_cluster" "spark_cluster" {
   core_instance_group {
     instance_type  = var.core_instance_type
     instance_count = var.core_instance_count
+  }
+}
+
+resource "aws_sns_topic" "emr_alarm_topic" {
+  name = "emr-alarm-topic"
+}
+
+resource "aws_sns_topic_subscription" "emr_alarm_subscription" {
+  topic_arn = aws_sns_topic.emr_alarm_topic.arn
+  protocol  = "email"
+  endpoint  = "aws.muzzle950@passinbox.com"
+}
+
+resource "aws_cloudwatch_metric_alarm" "cpu_utilization_high" {
+  alarm_name          = "emr-cpu-utilization-high"
+  comparison_operator = "GreaterThanThreshold"
+  evaluation_periods  = "1"
+  metric_name         = "CPUUtilization"
+  namespace           = "AWS/ElasticMapReduce"
+  period              = 300
+  statistic           = "Average"
+  threshold           = 85
+  alarm_description   = "Alarm when CPU exceeds 85%"
+  alarm_actions       = [aws_sns_topic.emr_alarm_topic.arn]
+  dimensions = {
+    JobFlowId = aws_emr_cluster.spark_cluster.id
+  }
+}
+
+resource "aws_cloudwatch_metric_alarm" "memory_utilization_high" {
+  alarm_name          = "emr-memory-utilization-high"
+  comparison_operator = "GreaterThanThreshold"
+  evaluation_periods  = "1"
+  metric_name         = "MemoryUtilization" 
+  namespace           = "AWS/ElasticMapReduce" 
+  period              = 300
+  statistic           = "Average"
+  threshold           = 85
+  alarm_description   = "Alarm when memory exceeds 85%"
+  alarm_actions       = [aws_sns_topic.emr_alarm_topic.arn]
+  dimensions = {
+    JobFlowId = aws_emr_cluster.spark_cluster.id
+  }
+}
+
+resource "aws_cloudwatch_metric_alarm" "storage_utilization_high" {
+  alarm_name          = "emr-storage-utilization-high"
+  comparison_operator = "GreaterThanThreshold"
+  evaluation_periods  = "1"
+  metric_name         = "StorageUtilization" 
+  namespace           = "AWS/ElasticMapReduce" 
+  period              = 300
+  statistic           = "Average"
+  threshold           = 85
+  alarm_description   = "Alarm when storage exceeds 85%"
+  alarm_actions       = [aws_sns_topic.emr_alarm_topic.arn]
+  dimensions = {
+    JobFlowId = aws_emr_cluster.spark_cluster.id
   }
 }
 
