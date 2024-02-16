@@ -177,6 +177,7 @@ resource "random_id" "bucket_suffix" {
   byte_length = 2
 }
 
+
 #Create Apache Spark Cluster using EC2
 resource "aws_emr_cluster" "spark_cluster" {
   name          = var.cluster_name
@@ -287,4 +288,60 @@ resource "aws_docdb_cluster_instance" "docdb_instances" {
   engine             = "docdb"
 }
 
+resource "aws_sns_topic" "docdb_alarm_topic" {
+  name = "docdb-alarm-topic"
+}
 
+resource "aws_sns_topic_subscription" "docdb_alarm_subscription" {
+  topic_arn = aws_sns_topic.docdb_alarm_topic.arn
+  protocol  = "email"
+  endpoint  = "aws.muzzle950@passinbox.com"
+}
+
+resource "aws_cloudwatch_metric_alarm" "docdb_cpu_utilization_high" {
+  alarm_name          = "docdb-cpu-utilization-high"
+  comparison_operator = "GreaterThanThreshold"
+  evaluation_periods  = "1"
+  metric_name         = "CPUUtilization"
+  namespace           = "AWS/DocDB"
+  period              = 300
+  statistic           = "Average"
+  threshold           = 85
+  alarm_description   = "Alarm when CPU exceeds 85%"
+  alarm_actions       = [aws_sns_topic.docdb_alarm_topic.arn]
+  dimensions = {
+    DBClusterIdentifier = aws_docdb_cluster.docdb.cluster_identifier
+  }
+}
+
+resource "aws_cloudwatch_metric_alarm" "docdb_memory_utilization_low" {
+  alarm_name          = "docdb-memory-utilization-low"
+  comparison_operator = "LessThanThreshold"
+  evaluation_periods  = "1"
+  metric_name         = "FreeableMemory"
+  namespace           = "AWS/DocDB"
+  period              = 300
+  statistic           = "Average"
+  threshold           = 15 * 1024 * 1024 * 1024 
+  alarm_description   = "Alarm when freeable memory is too low"
+  alarm_actions       = [aws_sns_topic.docdb_alarm_topic.arn]
+  dimensions = {
+    DBClusterIdentifier = aws_docdb_cluster.docdb.cluster_identifier
+  }
+}
+
+resource "aws_cloudwatch_metric_alarm" "docdb_storage_utilization_low" {
+  alarm_name          = "docdb-storage-utilization-low"
+  comparison_operator = "LessThanThreshold"
+  evaluation_periods  = "1"
+  metric_name         = "FreeStorageSpace"
+  namespace           = "AWS/DocDB"
+  period              = 300
+  statistic           = "Average"
+  threshold           = 10 * 1024 * 1024 * 1024 
+  alarm_description   = "Alarm when free storage space is too low"
+  alarm_actions       = [aws_sns_topic.docdb_alarm_topic.arn]
+  dimensions = {
+    DBClusterIdentifier = aws_docdb_cluster.docdb.cluster_identifier
+  }
+}
